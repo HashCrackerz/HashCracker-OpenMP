@@ -47,3 +47,34 @@ Schema rilevato: [SALT] + [PASSWORD]
 Tempo Totale: 6.3731 s
 -----------------------------------------------------------
 Tutti i test completati.
+
+#########################   lunghezza dinamica - salt no dict    #####################################
+
+--- Compilazione in corso ---
+Compilazione riuscita. Inizio Test...
+Target Pass: erty | Salt: qw | Dizionario: no
+-----------------------------------------------------------
+Running with OMP_NUM_THREADS=48 ...
+========================================
+./estensione_omp Avvio estensione OpenMP ...
+Target Password: erty
+Salt applicato : qw
+Stringa target : qwerty (Hash calcolato)
+Dizionario     : NO (ASSETS/rockyou_trimmed.txt)
+========================================
+
+
+Brute Force Sequenziale (Salted)...
+Tentativo lunghezza totale (pass+salt) 1... No.
+Tentativo lunghezza totale (pass+salt) 2... No.
+Tentativo lunghezza totale (pass+salt) 3... No.
+Tentativo lunghezza totale (pass+salt) 4... No.
+Tentativo lunghezza totale (pass+salt) 5... No.
+Tentativo lunghezza totale (pass+salt) 6... TROVATA!
+
+Stringa Totale trovata: qwerty
+Schema rilevato: [SALT] + [PASSWORD]
+*** PASSWORD DECIFRATA: erty ***
+Tempo Totale: 118.6754 s
+-----------------------------------------------------------
+Tutti i test completati.    
