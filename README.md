@@ -2,77 +2,62 @@
   <img width="150" alt="logo" src="https://github.com/user-attachments/assets/73297594-3581-4afd-ad0b-39d4bc0e66bf" />
 </p>
 
-# HashCracker_OpenMP
+# HashCracker (OpenMP)
 ## _Parallel SHA-256 Brute Force & Dictionary (salted) Password Cracker_
 
+[🇬🇧 English](README.md) | [🇮🇹 Italiano](README-IT.md)
 
 ![alt text](https://img.shields.io/badge/Language-C++/OpenMP-green)
 
 ![alt text](https://img.shields.io/badge/Algorithm-SHA256-purple)
 
-Estensione del progetto per il corso di Sistemi di Elaborazione Accelerata della facoltà di Ingegneria Informatica Magistrale di UniBo.
-Applicazione **parallela** per il cracking di password tramite attacco Brute Force su hash SHA-256 (anche salted) e attacco a dizionario sfruttando il parallelismo messo a disposizione da sistemi HPC e la libreria OpenMP. 
+Extension of the project for the Accelerated Computing Systems course at the Master's degree in Computer Engineering, University of Bologna.
+**Parallel** application for password cracking through Brute Force attack on SHA-256 hashes (including salted) and dictionary attack, leveraging the parallelism provided by HPC systems and the OpenMP library.
 
-## 📝 Descrizione
-Questo repository contiene l'implementazione OpenMP di un password cracker per invertire hash SHA-256. Supporta attacchi Brute Force e attacchi a dizionario, incluso supporto per salt. L'obiettivo è mostrare come riprogettare la strategia di parallelismo passando da milioni di thread leggeri (CUDA) a un numero limitato di thread CPU più potenti (OpenMP), preservando correttezza e ottenendo buoni speedup su multi-core.
+## 📝 Description
+This repository contains the OpenMP implementation of a password cracker to reverse SHA-256 hashes. It supports Brute Force attacks and dictionary attacks, including salt support. The goal is to show how to redesign the parallelism strategy by moving from millions of lightweight threads (CUDA) to a limited number of more powerful CPU threads (OpenMP), preserving correctness and achieving good speedups on multi-core systems.
 
-## ⚙️ Funzionalità
-- **Brute Force**: suddivisione del search-space per primo carattere (strategie di scheduling dinamico).
-- **Attacco a Dizionario**: caricamento efficiente in memoria e processing parallelo delle parole.
-- **Supporto Salted Hashes**: gestione salt come prefisso/suffisso nelle verifiche.
-- **Early Exit: flag volatile condivisa per terminazione anticipata quando la password è trovata**.
-- **Script di test / SLURM**: template per eseguire test di scalabilità su cluster (G100).
+## ⚙️ Features
+- **Brute Force**: search-space partitioning by first character (dynamic scheduling strategies).
+- **Dictionary Attack**: efficient in-memory loading and parallel word processing.
+- **Salted Hashes Support**: salt handling as prefix/suffix in verifications.
+- **Early Exit: shared volatile flag for early termination when password is found**.
+- **Test / SLURM scripts**: templates to run scalability tests on clusters (G100).
 
-## 📂 Struttura del Progetto
-- `kernel_omp.cpp` — kernel principale OpenMP (brute force).
-- `kernel_omp_estensione.cpp` — versione con salt & dizionario.
-- `ESTENSIONE/` — codice specifico per attacchi ibridi (dizionario + salt).
-- `UTILS/` — funzioni di utilità (I/O, parsing argomenti, charset loader).
-- `ASSETS/` — charset, wordlists (es. CharSet.txt, rockyou_trimmed.txt).
+## 📂 Project Structure
+- `kernel_omp.cpp` — main OpenMP kernel (brute force).
+- `kernel_omp_estensione.cpp` — version with salt & dictionary.
+- `ESTENSIONE/` — specific code for hybrid attacks (dictionary + salt).
+- `UTILS/` — utility functions (I/O, argument parsing, charset loader).
+- `ASSETS/` — charset, wordlists (e.g., CharSet.txt, rockyou_trimmed.txt).
 
-## 🛠️ Requisiti
-- **Hardware**: CPU multi-core 
+## 🛠️ Requirements
+- **Hardware**: Multi-core CPU 
 - **Software**:
-  - g++ con supporto OpenMP (GCC / Clang).
-  - OpenSSL (per <openssl/sha.h>).
+  - g++ with OpenMP support (GCC / Clang).
+  - OpenSSL (for <openssl/sha.h>).
  
-## 🚀 Compilazione
+## 🚀 Compilation
 
-Assicurarsi di avere le librerie OpenSSL linkate correttamente.
+Make sure OpenSSL libraries are linked correctly.
 ```shell
 g++ -fopenmp -O3 kernel_omp.cpp sequenziale.cpp UTILS/utils.cpp -o bruteforce_omp -lssl -lcrypto
 ```
-_(cambiare i nomi dei file e delle dipendenze in base alla versione da compilare)_
+_(change file names and dependencies based on the version to compile)_
 
-## 💻 Utilizzo
-Se il sistema che si utilizza non è gestito da un job scheduler è possibile eseguire direttamente il file compilato: 
+## 💻 Usage
+If your system is not managed by a job scheduler, you can directly run the compiled file: 
 ```shell
-./bruteforce_estensione_omp <hash_target> <min_len> <max_len> <file_charset> [<use_dictionary(si/no)> <file_dizionario>] 
+./bruteforce_estensione_omp <hash_target> <min_len> <max_len> <file_charset> [<use_dictionary(yes/no)> <dictionary_file>] 
 ```
-_(esempio con la versione estesa con salt e dizionario)_
+_(example with extended version with salt and dictionary)_
 
-Altrimenti è necessario schedulare l'esecuzione tramite uno scheduler (come ad esempio SLURM): 
+Otherwise, it is necessary to schedule execution through a scheduler (such as SLURM): 
 
 ```shell
 sbatch ./launcher.sh
 ```
 
-## 👥 Autori
+## 👥 Authors
 - [Andrea Vitale](https://github.com/WHYUBM)
 - [Matteo Fontolan](https://github.com/itsjustwhitee)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
