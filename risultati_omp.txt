@@ -18,3 +18,21 @@ Password decifrata: qwerty
 Tempo Totale: 119.3784 secondi
 ------------------------------------------------
 Test Completati.
+
+
+
+#########################   lunghezza fissa    #####################################
+
+
+Target Password: qwerty
+Range lunghezza: 6 - 6
+Charset len: 67
+========================================
+
+--- Inizio Test Brute Force OpenMP ---
+Numero max threads OpenMP: 48
+Tentativo lunghezza 6... TROVATA!
+Password decifrata: qwerty
+Tempo Totale: 108.4757 secondi
+------------------------------------------------
+Test Completati.
