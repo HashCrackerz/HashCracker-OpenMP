@@ -5,7 +5,7 @@
 #include <time.h>
 #include <omp.h>
 #include <openssl/sha.h>
-#include "omp_estensione.h"
+#include "ESTENSIONE/omp_estensione.h"
 #include "UTILS/utils.h"     
 #include "UTILS/costanti.h"  
 
@@ -47,12 +47,11 @@ int attackDictionaryOMP(char* flat_dict, int num_words, int salt_len, char* char
     for (int i = 0; i < num_words; i++) {
         if (stop_search) continue;
 
-        // Accesso alla parola linearizzata
         char* myWord = &flat_dict[i * DICT_WORD_LEN]; 
         int wordLen = strlen(myWord); 
         if (wordLen == 0) continue;
 
-        char salt[MAX_SALT_LENGTH + 1]; // +1 per sicurezza terminatore
+        char salt[MAX_SALT_LENGTH + 1]; 
         char combined[DICT_WORD_LEN + MAX_SALT_LENGTH + 1];
 
         // Loop sui possibili salt
@@ -61,7 +60,7 @@ int attackDictionaryOMP(char* flat_dict, int num_words, int salt_len, char* char
 
             idxToString(sIdx, salt, salt_len, charSet, charSetLen);
 
-            // SALT + PASSWORD 
+            // SALT + PASSWORD
             int k = 0;
             memcpy(combined, salt, salt_len);
             k += salt_len;
@@ -72,8 +71,8 @@ int attackDictionaryOMP(char* flat_dict, int num_words, int salt_len, char* char
                 #pragma omp critical
                 {
                     if (!stop_search) {
-                        combined[k] = '\0';
-                        strcpy(result_buffer, combined);
+                        // Restituisco SOLO la parola del dizionario
+                        strcpy(result_buffer, myWord);
                         stop_search = 1;
                         found = 1;
                     }
@@ -81,7 +80,7 @@ int attackDictionaryOMP(char* flat_dict, int num_words, int salt_len, char* char
                 break;
             }
 
-            // PASSWORD + SALT
+            //  PASSWORD + SALT 
             k = 0;
             memcpy(combined, myWord, wordLen);
             k += wordLen;
@@ -92,8 +91,8 @@ int attackDictionaryOMP(char* flat_dict, int num_words, int salt_len, char* char
                 #pragma omp critical
                 {
                     if (!stop_search) {
-                        combined[k] = '\0';
-                        strcpy(result_buffer, combined);
+                        // Restituisco SOLO la parola del dizionario anche qui
+                        strcpy(result_buffer, myWord);
                         stop_search = 1;
                         found = 1;
                     }
@@ -161,9 +160,8 @@ void testEstensioneOpenMP(unsigned char* target_hash, int min_test_len, int max_
     bool found = false;
     double startT = cpuSecond();
 
-    // Per prima cosa provo l'attacco a dizionario
     if (use_dict) {
-        printf("\nAttacco a Dizionario + Generazione Salt...\n");
+        printf("\nAttacco a Dizionario + Generazione Salt (OpenMP)...\n");
         int numWords = 0;
         char* flat_dict = load_flattened_dictionary(dict_path, &numWords);
 
@@ -173,8 +171,19 @@ void testEstensioneOpenMP(unsigned char* target_hash, int min_test_len, int max_
             int saltLen = strlen(salt_str); 
             
             if (attackDictionaryOMP(flat_dict, numWords, saltLen, charSet, target_hash, found_full_string)) {
-                found = true;
-                printf("*** PASSWORD TROVATA (Dizionario) ***\n");
+                
+                printf("Parola candidata trovata (OpenMP): %s\n", found_full_string);
+
+                if (testLogin(found_full_string, strlen(found_full_string), target_hash, salt_str)) {
+                    printf("\n************************************************\n");
+                    printf("*** PASSWORD TROVATA E VERIFICATA: %s ***\n", found_full_string);
+                    printf("************************************************\n");
+                    found = true;
+                } else {
+                    printf("Attenzione: Collisione trovata (probabilmente con un salt diverso), ma la verifica testLogin ha fallito.\n");
+                    printf("Continuo la ricerca...\n");
+                }
+
             } else {
                 printf("Non trovata nel dizionario.\n");
             }
@@ -184,19 +193,25 @@ void testEstensioneOpenMP(unsigned char* target_hash, int min_test_len, int max_
         }
     }
 
-    // Se non trovo la password con l'attacco a dizionario provo con il salt
     if (!found) {
-        printf("\nBrute Force Sequenziale (Salted)...\n");
+        printf("\nBrute Force OpenMP (Salted)...\n");
         
+        memset(found_full_string, 0, MAX_CANDIDATE * sizeof(char)); 
+
         for (int len = min_test_len; len <= max_test_len; len++) {
             if (found) break;
             printf("Tentativo lunghezza totale (pass+salt) %d... ", len);
             fflush(stdout);
 
+            memset(found_full_string, 0, MAX_CANDIDATE * sizeof(char));
+
             bruteForceSaltOMP(len, target_hash, charSet, found_full_string);
 
             if (strlen(found_full_string) > 0) {
                 printf("TROVATA!\n");
+                printf("\n************************************************\n");
+                printf("*** PASSWORD TROVATA (Brute Force): %s ***\n", found_full_string);
+                printf("************************************************\n");
                 found = true;
             } else {
                 printf("No.\n");
@@ -206,39 +221,8 @@ void testEstensioneOpenMP(unsigned char* target_hash, int min_test_len, int max_
 
     double totalTime = cpuSecond() - startT;
 
-    if (found) {
-        printf("\nStringa Totale trovata: %s\n", found_full_string);
-        
-        int totalLen = strlen(found_full_string);
-        int mySaltLen = strlen(salt_str);
-        int realPassLen = totalLen - mySaltLen;
-        char* final_decrypted_pass = NULL;
-
-        if (realPassLen > 0) {
-            // Check Salt all'inizio (come da utils.c)
-            if (strncmp(found_full_string, salt_str, mySaltLen) == 0) {
-                final_decrypted_pass = strdup(found_full_string + mySaltLen);
-                printf("Schema rilevato: [SALT] + [PASSWORD]\n");
-            }
-            // Check Salt alla fine
-            else if (strncmp(found_full_string + realPassLen, salt_str, mySaltLen) == 0) {
-                final_decrypted_pass = (char*)malloc(realPassLen + 1);
-                if(final_decrypted_pass) {
-                    strncpy(final_decrypted_pass, found_full_string, realPassLen);
-                    final_decrypted_pass[realPassLen] = '\0';
-                }
-                printf("Schema rilevato: [PASSWORD] + [SALT]\n");
-            }
-        }
-
-        if (final_decrypted_pass) {
-            printf("*** PASSWORD DECIFRATA: %s ***\n", final_decrypted_pass);
-            free(final_decrypted_pass);
-        } else {
-            printf("Errore: Hash trovato ma il salt non corrisponde alla posizione prevista.\n");
-        }
-    } else {
-        printf("Password non trovata.\n");
+    if (!found) {
+        printf("\nNessuna password trovata nel range specificato.\n");
     }
 
     printf("Tempo Totale: %.4f s\n", totalTime);
