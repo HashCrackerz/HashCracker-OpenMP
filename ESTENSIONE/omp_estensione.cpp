@@ -158,7 +158,7 @@ void testEstensioneOpenMP(unsigned char* target_hash, int min_test_len, int max_
     
     char found_full_string[MAX_CANDIDATE] = {0};
     bool found = false;
-    double startT = cpuSecond();
+    double startT = 0.0;
 
     if (use_dict) {
         printf("\nAttacco a Dizionario + Generazione Salt (OpenMP)...\n");
@@ -169,6 +169,7 @@ void testEstensioneOpenMP(unsigned char* target_hash, int min_test_len, int max_
             printf("Dizionario caricato: %d parole.\n", numWords);
             
             int saltLen = strlen(salt_str); 
+            startT = cpuSecond();
             
             if (attackDictionaryOMP(flat_dict, numWords, saltLen, charSet, target_hash, found_full_string)) {
                 
